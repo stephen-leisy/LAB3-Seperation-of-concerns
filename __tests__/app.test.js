@@ -88,14 +88,16 @@ describe('03_separation-of-concerns-demo routes', () => {
   });
 
   it('It should delete an order quantity by its id', async () => {
+    
     const order = await request(app)
       .post('/api/v1/orders')
       .send({ quantity: 10 });
+    const checkOrder = order.body.id;
     const wrongOrder = await request(app)
-      .delete('/api/v1/orders/1')
+      .delete(`/api/v1/orders/${checkOrder}`)
     
     const checkIfExists = await request(app)
-      .get('/api/v1/orders/1');
+      .get(`/api/v1/orders/${checkOrder}`);
 
     
 
