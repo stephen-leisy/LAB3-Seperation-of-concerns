@@ -2,44 +2,31 @@ const pool = require('../lib/utils/pool');
 const setup = require('../data/setup');
 const request = require('supertest');
 const app = require('../lib/app');
+const Order = require('../lib/models/Order.js');
 
-jest.mock('twilio', () => () => ({
-  messages: {
-    create: jest.fn(),
-  },
-}));
+jest.mock('../lib/utils/twilio.js');
+const twilio = require('../lib/utils/twilio.js');
 
 describe('03_separation-of-concerns-demo routes', () => {
   beforeEach(() => {
     return setup(pool);
+  });
+  let order;
+  beforeEach(async () => {
+    order = await Order.insert({ quantity: 10 });
+    twilio.sendSms.mockClear();
   });
 
   it('creates a new order in our database and sends a text message', () => {
     return request(app)
       .post('/api/v1/orders')
       .send({ quantity: 10 })
-      .then((res) => {
-        // expect(createMessage).toHaveBeenCalledTimes(1);
-        expect(res.body).toEqual({
-          id: '1',
-          quantity: 10,
-        });
+      .then(() => {
+        expect(twilio.sendSms).toHaveBeenCalledTimes(1);
       });
   });
 
-  it('ASYNC/AWAIT: creates a new order in our database and sends a text message', async () => {
-    const res = await request(app)
-      .post('/api/v1/orders')
-      .send({ quantity: 10 });
-
-    expect(res.body).toEqual({
-      id: '1',
-      quantity: 10,
-    });
-  });
-
   it('returns all orders in the database', async () => {
-    await request(app).post('/api/v1/orders').send({ quantity: 10 });
     await request(app).post('/api/v1/orders').send({ quantity: 1000 });
 
     const orders = await request(app).get('/api/v1/orders');
@@ -57,12 +44,9 @@ describe('03_separation-of-concerns-demo routes', () => {
   });
 
   it('it returns one specific order by its ID', async () => {
-    const order = await request(app)
-      .post('/api/v1/orders')
-      .send({ quantity: 10 });
+    const order = await request(app);
 
-    const result = await request(app)
-      .get(`/api/v1/orders/${order.body.id}`);
+    const result = await request(app).get('/api/v1/orders/1');
 
     expect(result.body).toEqual([
       {
@@ -73,34 +57,19 @@ describe('03_separation-of-concerns-demo routes', () => {
   });
 
   it('it should alter an existing order by ID', async () => {
-    const order = await request(app)
-      .post('/api/v1/orders')
-      .send({ quantity: 10 });
-
-    const whatItBeNow = await request(app)
-      .put(`/api/v1/orders/${order.body.id}`)
-      .send({ quantity: 500 });
-
-    expect(whatItBeNow.body).toEqual({
-      id: '1',
-      quantity: 500,
-    });
+    return request(app)
+      .put(`/api/v1/orders/${order.id}`)
+      .send({ quantity: 13 })
+      .then(() => {
+        expect(twilio.sendSms).toHaveBeenCalledTimes(1);
+      });
   });
 
   it('It should delete an order quantity by its id', async () => {
-    
-    const order = await request(app)
-      .post('/api/v1/orders')
-      .send({ quantity: 10 });
-    const checkOrder = order.body.id;
-    const wrongOrder = await request(app)
-      .delete(`/api/v1/orders/${checkOrder}`)
-    
-    const checkIfExists = await request(app)
-      .get(`/api/v1/orders/${checkOrder}`);
-
-    
-
-    expect(checkIfExists.body).toEqual([]);
+    return request(app)
+      .delete(`/api/v1/orders/${order.id}`)
+      .then(() => {
+        expect(twilio.sendSms).toHaveBeenCalledTimes(1);
+      });
   });
 });
