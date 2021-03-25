@@ -61,19 +61,34 @@ describe('03_separation-of-concerns-demo routes', () => {
   });
 
   it('it returns one specific order by its ID', async () => {
-    await request(app)
+    const order = await request(app)
     .post('/api/v1/orders')
     .send({ quantity: 10 });
 
-    const order = await request(app)
-      .get('/api/v1/orders/?id=1')
+    const result = await request(app)
+      .get(`/api/v1/orders/${order.body.id}`)
     
-    expect(order.body).toEqual([{
+    expect(result.body).toEqual([{
       id: '1',
       quantity: 10,
     }])
 
 
+  })
+
+  it('it should alter an existing order by ID', async () => {
+    const order = await request(app)
+    .post('/api/v1/orders')
+    .send({ quantity: 10 });
+
+    const whatItBeNow = await request(app)
+    .put(`/api/v1/orders/${order.body.id}`)
+    .send({ quantity: 500 });
+
+    expect(whatItBeNow.body).toEqual([{
+      id: '1',
+      quantity: 500,
+    }])
   })
 });
 
