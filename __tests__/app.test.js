@@ -80,15 +80,15 @@ describe('03_separation-of-concerns-demo routes', () => {
     const order = await request(app)
     .post('/api/v1/orders')
     .send({ quantity: 10 });
-
+console.log(order.body.id);
     const whatItBeNow = await request(app)
     .put(`/api/v1/orders/${order.body.id}`)
     .send({ quantity: 500 });
-
-    expect(whatItBeNow.body).toEqual([{
+console.log(whatItBeNow.body, 'tests')
+    expect(whatItBeNow.body).toEqual({
       id: '1',
       quantity: 500,
-    }])
+    })
   })
 });
 
