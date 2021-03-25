@@ -61,7 +61,8 @@ describe('03_separation-of-concerns-demo routes', () => {
       .post('/api/v1/orders')
       .send({ quantity: 10 });
 
-    const result = await request(app).get(`/api/v1/orders/${order.body.id}`);
+    const result = await request(app)
+      .get(`/api/v1/orders/${order.body.id}`);
 
     expect(result.body).toEqual([
       {
@@ -91,10 +92,13 @@ describe('03_separation-of-concerns-demo routes', () => {
       .post('/api/v1/orders')
       .send({ quantity: 10 });
     const wrongOrder = await request(app)
-      .delete(`/api/v1/orders/${order.body.id}`)
-      
+      .delete('/api/v1/orders/1')
+    
+    const checkIfExists = await request(app)
+      .get('/api/v1/orders/1');
+
     
 
-    expect(wrongOrder.body).toEqual({});
+    expect(checkIfExists.body).toEqual([]);
   });
 });
